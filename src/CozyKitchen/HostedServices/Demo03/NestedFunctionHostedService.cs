@@ -12,19 +12,19 @@ public class NestedFunctionHostedService : IHostedService
 {
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
-    private readonly IKernel _kernel;
-    private readonly IDictionary<string, ISKFunction> _functions;
+    private readonly Kernel _kernel;
+    private KernelPlugin _prompts;
+
     public NestedFunctionHostedService(
         ILogger<NestedFunctionHostedService> logger,
         IConfiguration configuration,
-        IKernel kernel)
+        Kernel kernel)
     {
         _logger = logger;
         _configuration = configuration;
         _kernel = kernel;
-        _functions = _kernel.ImportSemanticFunctionsFromDirectory(
-            PathExtensions.GetPluginsRootFolder(),
-            "ResumeAssistantPlugin");
+        _prompts = _kernel.CreatePluginFromPromptDirectory(
+            $"{PathExtensions.GetPluginsRootFolder()}/ResumeAssistantPlugin");
     }
     public async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -32,13 +32,13 @@ public class NestedFunctionHostedService : IHostedService
 
         // need to import the Native pluggin, as will be used as nested function of the main Semantic function
         var graphSkillsPlugin = new GraphUserProfileSkillsPlugin(graphClient);
-        _kernel.ImportFunctions(graphSkillsPlugin, "GraphSkillsPlugin");
+        _ = _kernel.Plugins.AddFromObject(graphSkillsPlugin, "GraphSkillsPlugin");
 
-        var mySkillsInfo = await _kernel.RunAsync(
-            _functions["MySkillsDefinition"]
+        var mySkillsInfo = await _kernel.InvokeAsync<string>(
+            _prompts["MySkillsDefinition"]
         );
 
-        _logger.LogInformation($"-----MY SKILLS-----\n{mySkillsInfo.GetValue<string>()}");
+        _logger.LogInformation($"-----MY SKILLS-----\n{mySkillsInfo}");
     }
 
     private GraphServiceClient GetGraphServiceClient()

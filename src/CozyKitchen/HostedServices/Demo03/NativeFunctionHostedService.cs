@@ -11,12 +11,12 @@ public class NativeFunctionHostedService : IHostedService
 {
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
 
     public NativeFunctionHostedService(
         ILogger<NativeFunctionHostedService> logger,
         IConfiguration configuration,
-        IKernel kernel)
+        Kernel kernel)
     {
         _logger = logger;
         _configuration = configuration;
@@ -27,11 +27,9 @@ public class NativeFunctionHostedService : IHostedService
         var graphClient = GetGraphServiceClient();
 
         var graphSkillsPlugin = new GraphUserProfileSkillsPlugin(graphClient);
-        var skills = _kernel.ImportFunctions(graphSkillsPlugin);
+        var plugin = _kernel.CreatePluginFromObject(graphSkillsPlugin);
 
-        var mySkillsResult = await _kernel.RunAsync(string.Empty, skills["GetMySkills"]);
-
-        var mySkills = mySkillsResult.GetValue<string>();
+        var mySkills = await _kernel.InvokeAsync<string>(plugin["GetMySkills"]);
 
         _logger.LogInformation($"My Skills: {mySkills}");
     }

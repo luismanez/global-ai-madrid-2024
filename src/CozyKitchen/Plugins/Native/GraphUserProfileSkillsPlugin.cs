@@ -12,7 +12,7 @@ public class GraphUserProfileSkillsPlugin
         _client = client;
     }
 
-    [SKFunction, Description("Get current user's skills in their profile in MS Graph")]
+    [KernelFunction, Description("Get current user's skills in their profile in MS Graph")]
     public async Task<string> GetMySkills()
     {
         var data = await _client.Me.Profile.Skills.GetAsync(q =>

@@ -2,40 +2,44 @@ using CozyKitchen.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Orchestration;
 
 namespace CozyKitchen.HostedServices;
 public class SemanticFunctionWithParamsHostedService : IHostedService
 {
-    private readonly IKernel _kernel;
-    private readonly IDictionary<string, ISKFunction> _functions;
+    private readonly Kernel _kernel;
+    private KernelPlugin _prompts;
     private readonly ILogger _logger;
 
     public SemanticFunctionWithParamsHostedService(
-        IKernel kernel,
+        Kernel kernel,
         ILogger<SemanticFunctionWithParamsHostedService> logger)
     {
         _kernel = kernel;
         _logger = logger;
-        _functions = _kernel.ImportSemanticFunctionsFromDirectory(
-            PathExtensions.GetPluginsRootFolder(),
-            "ResumeAssistantPlugin");
+        _prompts = _kernel.CreatePluginFromPromptDirectory(
+            $"{PathExtensions.GetPluginsRootFolder()}/ResumeAssistantPlugin");
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var variables = new ContextVariables();
-        variables.Set("FullName", "John Doe");
-        variables.Set("JobTitle", "Software Engineer");
-        variables.Set("TotalYearsOfExperience", "20");
-        variables.Set("MainArea", "Microsoft Technologies");
+        var chatResult = _kernel.InvokeStreamingAsync<StreamingChatMessageContent>(
+                _prompts["AboutMe"],
+                new()
+                {
+                    { "FullName", "John Doe" },
+                    { "JobTitle", "Software Engineer" },
+                    { "TotalYearsOfExperience", "20" },
+                    { "MainArea", "Microsoft Technologies"}
+                }
+            );
 
-        var aboutMe = await _kernel.RunAsync(
-            variables,
-            _functions["AboutMe"]
-        );
-
-        _logger.LogInformation($"-----ABOUT ME-----\n{aboutMe.GetValue<string>()}");
+        string message = "";
+        await foreach (var chunk in chatResult)
+        {
+            message += chunk;
+            Console.Write(chunk);
+        }
+        Console.WriteLine();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

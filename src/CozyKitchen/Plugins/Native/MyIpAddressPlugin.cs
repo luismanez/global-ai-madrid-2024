@@ -11,7 +11,7 @@ public class MyIpAddressPlugin
         _client = client;
     }
 
-    [SKFunction, Description("Get your IP address")]
+    [KernelFunction, Description("Get your IP address")]
     public async Task<string> WhatsMyIp()
     {
         var data = await _client.GetStringAsync("https://api.ipify.org");

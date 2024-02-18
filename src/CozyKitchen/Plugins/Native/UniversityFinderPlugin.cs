@@ -13,7 +13,7 @@ public class UniversityFinderPlugin
         _client = client;
     }
 
-    [SKFunction, Description("Get a list of universities in the given country")]
+    [KernelFunction, Description("Get a list of universities in the given country")]
     public async Task<string> ListByCountry(
         [Description("Country to find universities into")]
         string country,

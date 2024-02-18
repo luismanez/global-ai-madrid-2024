@@ -1,4 +1,5 @@
-﻿using CozyKitchen.Extensions;
+﻿using CozyKitchen;
+using CozyKitchen.Extensions;
 using CozyKitchen.HostedServices;
 using CozyKitchen.Options;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.SemanticKernel;
 
 var host = Host.CreateDefaultBuilder(args)
     .ConfigureHostConfiguration(configHost =>
@@ -31,6 +33,8 @@ var host = Host.CreateDefaultBuilder(args)
 
         var demoToRun = args.Length > 0 ? args[0] : "1";
 
+        //demoToRun = "3";
+
         switch (demoToRun)
         {
             default:
@@ -53,11 +57,14 @@ var host = Host.CreateDefaultBuilder(args)
                 services.AddHostedService<ChatCompletionHostedService>();
                 break;
             case "7":
-                services.AddHostedService<FunctionHooksHostedService>();
+                services.AddSingleton<IFunctionFilter, DiagnosticsFunctionFilter>();
+                services.AddSingleton<IFunctionFilter, DummyReplacerFunctionFilter>();
+                services.AddSingleton<IPromptFilter, DiagnosticsPromptFilter>();
+                services.AddHostedService<FunctionFilterHostedService>();
                 break;
-            case "8":
-                services.AddHostedService<FunctionCallingHostedService>();
-                break;
+            // case "8":
+            //     services.AddHostedService<FunctionCallingHostedService>();
+            //     break;
         }
     })
     .Build();

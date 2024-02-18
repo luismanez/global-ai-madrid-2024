@@ -1,19 +1,20 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.AI.Embeddings;
+using Microsoft.SemanticKernel.Embeddings;
 
 namespace CozyKitchen.HostedServices;
 public class EmbeddingGenerationHostedService : IHostedService
 {
-    private readonly ITextEmbeddingGeneration _textEmbeddingGeneration;
+    private readonly ITextEmbeddingGenerationService _textEmbeddingGeneration;
     private readonly ILogger<EmbeddingGenerationHostedService> _logger;
 
     public EmbeddingGenerationHostedService(
-        IKernel kernel,
+        Kernel kernel,
         ILogger<EmbeddingGenerationHostedService> logger)
     {
-        _textEmbeddingGeneration = kernel.GetService<ITextEmbeddingGeneration>();
+        _textEmbeddingGeneration = kernel.Services.GetService<ITextEmbeddingGenerationService>()!;
         _logger = logger;
     }
 

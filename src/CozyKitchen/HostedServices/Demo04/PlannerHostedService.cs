@@ -7,26 +7,27 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph.Beta;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Diagnostics;
-using Microsoft.SemanticKernel.Planners;
+using Microsoft.SemanticKernel.Planning.Handlebars;
 
 namespace CozyKitchen.HostedServices;
 public class PlannerHostedService : IHostedService
 {
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
     public PlannerHostedService(
         ILogger<NestedFunctionHostedService> logger,
         IConfiguration configuration,
-        IKernel kernel)
+        Kernel kernel)
     {
         _logger = logger;
         _configuration = configuration;
         _kernel = kernel;
-        _kernel.ImportSemanticFunctionsFromDirectory(
-            PathExtensions.GetPluginsRootFolder(),
-            "ResumeAssistantPlugin", "TravelAgentPlugin");
+
+        _kernel.ImportPluginFromPromptDirectory(
+            $"{PathExtensions.GetPluginsRootFolder()}/ResumeAssistantPlugin");
+        _kernel.ImportPluginFromPromptDirectory(
+            $"{PathExtensions.GetPluginsRootFolder()}/TravelAgentPlugin");
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -35,24 +36,25 @@ public class PlannerHostedService : IHostedService
 
         // need to import the Native pluggin, as is used as nested function of another Semantic function
         var graphSkillsPlugin = new GraphUserProfileSkillsPlugin(graphClient);
-        _kernel.ImportFunctions(graphSkillsPlugin, "GraphSkillsPlugin");
+        _kernel.Plugins.AddFromObject(graphSkillsPlugin, "GraphSkillsPlugin");
 
         Console.WriteLine("How can I help:");
         var ask = Console.ReadLine();
 
-        var planner = new SequentialPlanner(_kernel);
+        var planner = new HandlebarsPlanner(new HandlebarsPlannerOptions() { AllowLoops = true });
 
         try
         {
-            var plan = await planner.CreatePlanAsync(ask!, cancellationToken: cancellationToken);
+            var plan = await planner.CreatePlanAsync(_kernel, ask!);
             _logger.LogInformation("Plan:\n");
-            _logger.LogInformation(JsonSerializer.Serialize(plan, new JsonSerializerOptions { WriteIndented = true }));
+            _logger.LogInformation(
+                JsonSerializer.Serialize(plan, new JsonSerializerOptions { WriteIndented = true }));
 
-            var result = await _kernel.RunAsync(plan);
+            var result = await plan.InvokeAsync(_kernel);
             _logger.LogInformation("Plan results:\n");
-            _logger.LogInformation(result.GetValue<string>()!.Trim());
+            _logger.LogInformation(result);
         }
-        catch (SKException e)
+        catch (KernelException e)
         {
             // Create plan error: Not possible to create plan for goal with available functions.
             // Goal: ...

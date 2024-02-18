@@ -1,17 +1,18 @@
+using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 
 namespace CozyKitchen.HostedServices;
 public class HelloSemanticWorldHostedService : IHostedService
 {
     private readonly ILogger _logger;
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
 
     public HelloSemanticWorldHostedService(
         ILogger<HelloSemanticWorldHostedService> logger,
-        IKernel kernel)
+        Kernel kernel)
     {
         _logger = logger;
         _kernel = kernel;
@@ -28,19 +29,22 @@ public class HelloSemanticWorldHostedService : IHostedService
             {{$input}}
         ";
 
-        var jokeFunction = _kernel.CreateSemanticFunction(
+        var jokeFunction = _kernel.CreateFunctionFromPrompt(
             promptTemplate,
-            new OpenAIRequestSettings()
+            new OpenAIPromptExecutionSettings()
             {
                 MaxTokens = 100, Temperature = 0.4, TopP = 1
             });
 
-        var result = await _kernel.RunAsync(
-            input: "Chuck Norris movies",
-            pipeline: jokeFunction,
-            cancellationToken: cancellationToken);
+        // return as FunctionResult
+        var result = await _kernel.InvokeAsync(jokeFunction, new() { ["input"] = "Chuck Norris movies" });
+
+        // return as string
+        // var resultString = await _kernel.InvokeAsync<string>(jokeFunction, new() { ["input"] = "Chuck Norris movies" });
+        // _logger.LogInformation($"Joke: {resultString}");
 
         _logger.LogInformation($"Joke: {result.GetValue<string>()}");
+        _logger.LogInformation(result.Metadata?["Usage"]?.AsJson());
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

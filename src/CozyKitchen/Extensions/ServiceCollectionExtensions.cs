@@ -3,6 +3,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.SemanticKernel.Embeddings;
 
 namespace CozyKitchen.Extensions;
 public static class ServiceCollectionExtensions
@@ -11,25 +13,22 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services)
     {
         var serviceProvider = services.BuildServiceProvider();
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        //var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
         var openAiOptions = serviceProvider.GetRequiredService<IOptions<OpenAiOptions>>()!.Value;
 
-        var kernel = new KernelBuilder()
-            .WithLoggerFactory(loggerFactory!)
-            .WithAzureOpenAIChatCompletionService(
+        var kernelBuilder = services.AddKernel();
+        kernelBuilder.Services
+            //.AddLogging(c => c.AddDebug().SetMinimumLevel(LogLevel.Trace))
+            .AddAzureOpenAIChatCompletion(
                 endpoint: openAiOptions.ApiEndpoint,
                 deploymentName: openAiOptions.ChatModelName,
-                apiKey: openAiOptions.ApiKey
-            )
-            .WithAzureOpenAITextEmbeddingGenerationService(
+                apiKey: openAiOptions.ApiKey)
+            .AddAzureOpenAITextEmbeddingGeneration(
                 endpoint: openAiOptions.ApiEndpoint,
                 deploymentName: openAiOptions.EmbeddingsModelName,
                 apiKey: openAiOptions.ApiKey
-            )
-            .Build();
-
-        services.AddSingleton(kernel);
+            );
 
         return services;
     }
