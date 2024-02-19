@@ -33,7 +33,7 @@ var host = Host.CreateDefaultBuilder(args)
 
         var demoToRun = args.Length > 0 ? args[0] : "1";
 
-        //demoToRun = "3";
+        //demoToRun = "7";
 
         switch (demoToRun)
         {

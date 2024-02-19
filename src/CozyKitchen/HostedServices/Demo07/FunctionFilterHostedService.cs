@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 
 namespace CozyKitchen;
@@ -86,15 +85,15 @@ public sealed class DiagnosticsPromptFilter : IPromptFilter
         _logger = logger;
     }
 
-    public void OnPromptRendered(PromptRenderedContext context)
-    {
-        _logger.LogInformation(
-            $"{nameof(DiagnosticsPromptFilter)}.{nameof(OnPromptRendered)}");
-    }
-
     public void OnPromptRendering(PromptRenderingContext context)
     {
         _logger.LogInformation(
             $"{nameof(DiagnosticsPromptFilter)}.{nameof(OnPromptRendering)}");
+    }
+
+    public void OnPromptRendered(PromptRenderedContext context)
+    {
+        _logger.LogInformation(
+            $"{nameof(DiagnosticsPromptFilter)}.{nameof(OnPromptRendered)}");
     }
 }
