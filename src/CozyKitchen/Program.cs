@@ -62,9 +62,9 @@ var host = Host.CreateDefaultBuilder(args)
                 services.AddSingleton<IPromptFilter, DiagnosticsPromptFilter>();
                 services.AddHostedService<FunctionFilterHostedService>();
                 break;
-            // case "8":
-            //     services.AddHostedService<FunctionCallingHostedService>();
-            //     break;
+            case "8":
+                services.AddHostedService<YamlPromptHostedService>();
+                break;
         }
     })
     .Build();

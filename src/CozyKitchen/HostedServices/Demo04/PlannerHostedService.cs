@@ -15,15 +15,17 @@ public class PlannerHostedService : IHostedService
     private readonly ILogger _logger;
     private readonly IConfiguration _configuration;
     private readonly Kernel _kernel;
+    private readonly IHttpClientFactory _httpClientFactory;
+
     public PlannerHostedService(
         ILogger<NestedFunctionHostedService> logger,
         IConfiguration configuration,
-        Kernel kernel)
+        Kernel kernel, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _configuration = configuration;
         _kernel = kernel;
-
+        _httpClientFactory = httpClientFactory;
         _kernel.ImportPluginFromPromptDirectory(
             $"{PathExtensions.GetPluginsRootFolder()}/ResumeAssistantPlugin");
         _kernel.ImportPluginFromPromptDirectory(
@@ -34,9 +36,11 @@ public class PlannerHostedService : IHostedService
     {
         var graphClient = GetGraphServiceClient();
 
-        // need to import the Native pluggin, as is used as nested function of another Semantic function
+        // adding native Plugins
         var graphSkillsPlugin = new GraphUserProfileSkillsPlugin(graphClient);
         _kernel.Plugins.AddFromObject(graphSkillsPlugin, "GraphSkillsPlugin");
+        _kernel.ImportPluginFromObject(new MyIpAddressPlugin(_httpClientFactory.CreateClient()));
+        _kernel.ImportPluginFromObject(new UniversityFinderPlugin(_httpClientFactory.CreateClient()));
 
         Console.WriteLine("How can I help:");
         var ask = Console.ReadLine();
