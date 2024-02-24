@@ -33,7 +33,7 @@ var host = Host.CreateDefaultBuilder(args)
 
         var demoToRun = args.Length > 0 ? args[0] : "1";
 
-        //demoToRun = "7";
+        //demoToRun = "9";
 
         switch (demoToRun)
         {
@@ -64,6 +64,13 @@ var host = Host.CreateDefaultBuilder(args)
                 break;
             case "8":
                 services.AddHostedService<YamlPromptHostedService>();
+                break;
+            case "9":
+                services.AddSingleton<Calendar>();
+                services.AddSingleton<Airport>();
+                services.AddSingleton<Travel>();
+                services.AddSingleton<UserProfile>();
+                services.AddHostedService<AgentsCollaborationHostedService>();
                 break;
         }
     })
