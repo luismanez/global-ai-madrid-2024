@@ -20,12 +20,14 @@ public class PlannerHostedService : IHostedService
     public PlannerHostedService(
         ILogger<NestedFunctionHostedService> logger,
         IConfiguration configuration,
-        Kernel kernel, IHttpClientFactory httpClientFactory)
+        Kernel kernel,
+        IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _configuration = configuration;
         _kernel = kernel;
         _httpClientFactory = httpClientFactory;
+
         _kernel.ImportPluginFromPromptDirectory(
             $"{PathExtensions.GetPluginsRootFolder()}/ResumeAssistantPlugin");
         _kernel.ImportPluginFromPromptDirectory(
@@ -54,7 +56,7 @@ public class PlannerHostedService : IHostedService
             _logger.LogInformation(
                 JsonSerializer.Serialize(plan, new JsonSerializerOptions { WriteIndented = true }));
 
-            var result = await plan.InvokeAsync(_kernel);
+            var result = await plan.InvokeAsync(_kernel, cancellationToken: cancellationToken);
             _logger.LogInformation("Plan results:\n");
             _logger.LogInformation(result);
         }

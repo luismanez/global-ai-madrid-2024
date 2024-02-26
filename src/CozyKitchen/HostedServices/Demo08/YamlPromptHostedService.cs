@@ -26,7 +26,8 @@ public class YamlPromptHostedService : IHostedService
             {
                 { "topic", "Clean Energy" },
                 { "length", "7" },
-            });
+            },
+            cancellationToken: cancellationToken);
 
         _logger.LogInformation(result);
     }
