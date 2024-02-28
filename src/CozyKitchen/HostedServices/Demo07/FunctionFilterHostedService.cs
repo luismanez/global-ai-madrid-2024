@@ -94,6 +94,6 @@ public sealed class DiagnosticsPromptFilter : IPromptFilter
     public void OnPromptRendered(PromptRenderedContext context)
     {
         _logger.LogInformation(
-            $"{nameof(DiagnosticsPromptFilter)}.{nameof(OnPromptRendered)}");
+            $"{nameof(DiagnosticsPromptFilter)}.{nameof(OnPromptRendered)}. Prompt: {context.RenderedPrompt}");
     }
 }
